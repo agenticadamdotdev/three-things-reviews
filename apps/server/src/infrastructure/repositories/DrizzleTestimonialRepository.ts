@@ -379,7 +379,7 @@ export class DrizzleTestimonialRepository implements ITestimonialRepository {
       });
 
       return {
-        label: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+        label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         value: Number(row?.count) || 0,
       };
     });

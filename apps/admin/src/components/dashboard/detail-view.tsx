@@ -325,19 +325,36 @@ export const DetailView = ({ form, onBack }: DetailViewProps) => {
         <div className="bg-(--v3-bg2) border border-(--v3-border) rounded-2xl p-6 flex flex-col">
           <div className="text-sm font-bold text-(--v3-text) mb-1.5">Review Volume</div>
           <div className="text-[12px] text-(--v3-muted2) mb-5">Last 14 days</div>
-          <div className="flex items-end gap-1.5 h-50 mt-auto">
-            {!stats?.reviewVolume?.length ? (
-              <div className="w-full h-full flex items-center justify-center text-[10px] text-(--v3-muted) italic">Not enough data yet</div>
-            ) : stats.reviewVolume.map((v, i) => {
-              const maxVolume = Math.max(...stats.reviewVolume.map(rv => rv.value), 1)
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full group">
-                  <div className="w-full bg-(--v3-teal)/25 rounded-t-lg mt-auto group-hover:bg-(--v3-teal) transition-all cursor-pointer" style={{ height: `${Math.max(5, Math.round((v.value / maxVolume) * 100))}%` }} />
-                  <div className="text-[8px] text-(--v3-muted) text-center font-bold tracking-tighter opacity-70">{v.label}</div>
-                </div>
-              )
-            })}
-          </div>
+          {(() => {
+            const volume = stats?.reviewVolume || []
+            const maxVolume = Math.max(...volume.map(rv => rv.value), 1)
+            const total = volume.reduce((sum, rv) => sum + rv.value, 0)
+            return (
+              <div className="relative flex items-end gap-1 sm:gap-1.5 h-50 mt-auto">
+                {volume.map((v, i) => {
+                  const pct = Math.round((v.value / maxVolume) * 100)
+                  return (
+                    <div key={i} className="flex-1 min-w-0 flex flex-col items-center gap-2 h-full group" title={`${v.label}: ${v.value} review${v.value === 1 ? '' : 's'}`}>
+                      <div className="relative flex-1 w-full">
+                        {v.value > 0 ? (
+                          <>
+                            <span className="absolute inset-x-0 text-center text-[11px] font-bold text-(--v3-text)" style={{ bottom: `calc(${pct}% + 4px)` }}>{v.value}</span>
+                            <div className="absolute inset-x-0 bottom-0 bg-(--v3-teal)/70 rounded-t-md group-hover:bg-(--v3-teal) transition-colors" style={{ height: `${pct}%` }} />
+                          </>
+                        ) : (
+                          <div className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-white/10" />
+                        )}
+                      </div>
+                      <div className={`text-[10px] text-(--v3-muted2) text-center font-semibold whitespace-nowrap ${i % 2 ? 'invisible sm:visible' : ''}`}>{v.label}</div>
+                    </div>
+                  )
+                })}
+                {total === 0 && (
+                  <div className="absolute inset-0 bottom-6 flex items-center justify-center text-[12px] text-(--v3-muted2)">No reviews in the last 14 days</div>
+                )}
+              </div>
+            )
+          })()}
         </div>
         <div className="bg-(--v3-bg2) border border-(--v3-border) rounded-2xl p-6">
           <div className="text-sm font-bold text-(--v3-text) mb-1.5">Rating Distribution</div>
