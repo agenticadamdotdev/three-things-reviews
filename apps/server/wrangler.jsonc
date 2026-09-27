@@ -11,7 +11,7 @@
     "run_worker_first": ["/api/*", "/doc", "/ui"]
   },
   "d1_databases": [
-    { "binding": "DB", "database_name": "three-things-reviews", "database_id": "REPLACE_WITH_D1_ID", "migrations_dir": "migrations" }
+    { "binding": "DB", "database_name": "three-things-reviews", "database_id": "59cf86e1-bf63-407c-bd6d-621a90b31f47", "migrations_dir": "migrations" }
   ],
   "vars": {
     "NODE_ENV": "production",
