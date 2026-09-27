@@ -180,8 +180,29 @@ publicRouter.openapi(getReviewsRoute, async (c) => {
   return response;
 });
 
+// Verified-buyer gate: reviews can only be submitted by the storefront's server, which checks the purchase
+// (paid, not refunded, checkout email matches) before forwarding it with the shared SUBMIT_SECRET.
 publicRouter.use('/reviews', async (c, next) => {
-  if (c.req.method === 'POST') {
+  if (c.req.method !== 'POST') return next();
+  const expected = process.env.SUBMIT_SECRET;
+  const given = c.req.header('x-submit-secret') || '';
+  if (!expected || given.length !== expected.length || !timingSafeEqual(given, expected)) {
+    return c.json({ error: 'Reviews can only be left from the purchase page.' }, 403);
+  }
+  c.set('trustedSubmit' as never, true as never);
+  return next();
+});
+
+function timingSafeEqual(a: string, b: string) {
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// Every accepted submission comes from the storefront server (one IP), which rate-limits buyers itself,
+// so the per-IP limiter only applies to anything that somehow reaches here without the secret.
+publicRouter.use('/reviews', async (c, next) => {
+  if (c.req.method === 'POST' && !c.get('trustedSubmit' as never)) {
     return rateLimiter({ limit: 5, windowMs: 15 * 60 * 1000 })(c, next);
   }
   return next();

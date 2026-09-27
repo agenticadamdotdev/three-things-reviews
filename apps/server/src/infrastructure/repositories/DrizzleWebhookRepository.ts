@@ -1,12 +1,12 @@
-import { eq, arrayContains } from 'drizzle-orm';
-import type { BunSQLDatabase } from 'drizzle-orm/bun-sql';
+import { eq } from 'drizzle-orm';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import * as schema from '../database/schema';
 import { webhooks, webhookLogs } from '../database/schema';
 import { Webhook } from '../../domain/entities/Webhook';
 import type { IWebhookRepository } from '../../domain/repositories/IWebhookRepository';
 
 export class DrizzleWebhookRepository implements IWebhookRepository {
-  constructor(private readonly db: BunSQLDatabase<typeof schema>) {}
+  constructor(private readonly db: DrizzleD1Database<typeof schema>) {}
 
   async findById(id: string): Promise<Webhook | null> {
     const [row] = await this.db.select().from(webhooks).where(eq(webhooks.id, id));
@@ -20,9 +20,9 @@ export class DrizzleWebhookRepository implements IWebhookRepository {
   }
 
   async findByEvent(event: string): Promise<Webhook[]> {
-    // For PostgreSQL we can use arrayContains
-    const rows = await this.db.select().from(webhooks).where(arrayContains(webhooks.events, [event]));
-    return rows.map(row => this.mapToDomain(row));
+    // D1 stores events as a JSON array, so filter in JS (a handful of webhooks at most).
+    const rows = await this.db.select().from(webhooks);
+    return rows.filter(row => (row.events as string[]).includes(event)).map(row => this.mapToDomain(row));
   }
 
   async save(webhook: Webhook): Promise<void> {

@@ -1,9 +1,6 @@
-import { drizzle } from 'drizzle-orm/bun-sql';
+import { drizzle } from 'drizzle-orm/d1';
+import { env } from 'cloudflare:workers';
 import * as schema from './schema';
 
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl && process.env.NODE_ENV !== 'test') {
-  throw new Error("DATABASE_URL environment variable is required. Please set it in your .env file.");
-}
-
-export const db = drizzle(databaseUrl || '', { schema });
+// Cloudflare D1, bound as DB in wrangler.jsonc. `env` from cloudflare:workers is available at module scope.
+export const db = drizzle((env as unknown as { DB: D1Database }).DB, { schema });

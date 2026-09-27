@@ -5,7 +5,6 @@ import { DrizzleApiKeyRepository } from './repositories/DrizzleApiKeyRepository'
 import { DrizzleUserRepository } from './repositories/DrizzleUserRepository';
 import { DrizzleWebhookRepository } from './repositories/DrizzleWebhookRepository';
 import { DrizzleNotificationRepository } from './repositories/DrizzleNotificationRepository';
-import { NodemailerEmailService } from './email/NodemailerEmailService';
 import type { IEmailService } from '../domain/services/IEmailService';
 
 import { WebhookService } from '../application/services/WebhookService';
@@ -61,11 +60,8 @@ const notificationRepository = new DrizzleNotificationRepository(db as any);
 // Services
 const webhookService = new WebhookService(webhookRepository);
 
-const emailService: IEmailService | null = process.env.SMTP_HOST
-  ? new NodemailerEmailService(
-      process.env.BASE_URL ?? (() => { throw new Error('BASE_URL must be set when SMTP_HOST is configured'); })()
-    )
-  : null;
+// Email notifications are off on Cloudflare (nodemailer needs raw sockets); new reviews show in the dashboard.
+const emailService: IEmailService | null = null;
 
 // Use Case Instances
 const generateUserApiKeys = new GenerateUserApiKeys(apiKeyRepository);

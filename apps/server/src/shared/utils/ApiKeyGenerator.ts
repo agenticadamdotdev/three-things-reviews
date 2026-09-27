@@ -1,4 +1,5 @@
-import { randomBytes, createHash } from 'node:crypto';
+import { createHash } from 'node:crypto';
+import { randomHex } from './randomHex';
 
 export class ApiKeyGenerator {
   /**
@@ -7,7 +8,7 @@ export class ApiKeyGenerator {
    */
   public static generate(type: 'public' | 'secret', environment: 'live' | 'test' = 'live'): { rawKey: string, keyHash: string, keyPrefix: string } {
     const prefix = `rk_${type === 'public' ? 'pk' : 'sk'}_${environment}_`;
-    const randomPart = randomBytes(24).toString('hex');
+    const randomPart = randomHex(24);
     const rawKey = `${prefix}${randomPart}`;
     const keyHash = createHash('sha256').update(rawKey).digest('hex');
     const keyPrefix = rawKey.substring(0, 16);
@@ -27,7 +28,7 @@ export class ApiKeyGenerator {
    */
   public static generatePublicId(prefix: string, environment: 'live' | 'test' = 'live'): string {
     const fullPrefix = `rk_${prefix}_${environment}_`;
-    const randomPart = randomBytes(12).toString('hex'); // Shorter than API keys
+    const randomPart = randomHex(12); // Shorter than API keys
     return `${fullPrefix}${randomPart}`;
   }
 }

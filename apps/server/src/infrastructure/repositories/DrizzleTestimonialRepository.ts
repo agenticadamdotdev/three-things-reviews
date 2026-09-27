@@ -1,5 +1,5 @@
 import { eq, and, sql, count, avg, countDistinct, type SQL } from 'drizzle-orm';
-import type { BunSQLDatabase } from 'drizzle-orm/bun-sql';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import * as schema from '../database/schema';
 import { testimonials } from '../database/schema';
 import { Testimonial } from '../../domain/entities/Testimonial';
@@ -8,7 +8,7 @@ import { Rating } from '../../domain/value-objects/Rating';
 import { Email } from '../../domain/value-objects/Email';
 
 export class DrizzleTestimonialRepository implements ITestimonialRepository {
-  constructor(private readonly db: BunSQLDatabase<typeof schema>) {}
+  constructor(private readonly db: DrizzleD1Database<typeof schema>) {}
 
   async findById(id: string): Promise<Testimonial | null> {
     const [row] = await this.db.select().from(testimonials).where(eq(testimonials.id, id));
@@ -184,7 +184,7 @@ export class DrizzleTestimonialRepository implements ITestimonialRepository {
     sqlChunks.push(sql`(case`);
     
     for (const { id, position } of positions) {
-      sqlChunks.push(sql`when ${testimonials.id} = ${id} then ${position}::integer`);
+      sqlChunks.push(sql`when ${testimonials.id} = ${id} then ${position}`);
     }
     
     sqlChunks.push(sql`end)`);
@@ -224,15 +224,15 @@ export class DrizzleTestimonialRepository implements ITestimonialRepository {
       .from(testimonials)
       .where(and(
         eq(testimonials.userId, userId),
-        sql`${testimonials.createdAt} >= NOW() - INTERVAL '30 days'`
+        sql`${testimonials.createdAt} >= ${Date.now() - 30 * 86400000}`
       ));
     
     const [prev30] = await this.db.select({ count: count(testimonials.id) })
       .from(testimonials)
       .where(and(
         eq(testimonials.userId, userId),
-        sql`${testimonials.createdAt} >= NOW() - INTERVAL '60 days'`,
-        sql`${testimonials.createdAt} < NOW() - INTERVAL '30 days'`
+        sql`${testimonials.createdAt} >= ${Date.now() - 60 * 86400000}`,
+        sql`${testimonials.createdAt} < ${Date.now() - 30 * 86400000}`
       ));
 
     const current30Count = Number(current30?.count || 0);
@@ -261,7 +261,7 @@ export class DrizzleTestimonialRepository implements ITestimonialRepository {
       .innerJoin(forms, eq(formVisits.formId, forms.id))
       .where(and(
         eq(forms.userId, userId),
-        sql`${formVisits.date} >= NOW() - INTERVAL '30 days'`
+        sql`${formVisits.date} >= ${new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)}`
       ));
       
     const [prev30VisitsResult] = await this.db.select({ count: sql<number>`sum(${formVisits.visits})` })
@@ -269,8 +269,8 @@ export class DrizzleTestimonialRepository implements ITestimonialRepository {
       .innerJoin(forms, eq(formVisits.formId, forms.id))
       .where(and(
         eq(forms.userId, userId),
-        sql`${formVisits.date} >= NOW() - INTERVAL '60 days'`,
-        sql`${formVisits.date} < NOW() - INTERVAL '30 days'`
+        sql`${formVisits.date} >= ${new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10)}`,
+        sql`${formVisits.date} < ${new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)}`
       ));
       
     const current30Visits = Number(current30VisitsResult?.count || 0);
@@ -352,13 +352,13 @@ export class DrizzleTestimonialRepository implements ITestimonialRepository {
 
     // Review volume (Daily - Last 14 days)
     const volumeRows = await this.db.select({
-      day: sql`date_trunc('day', ${testimonials.createdAt})`.as('day'),
+      day: sql`strftime('%Y-%m-%dT00:00:00', ${testimonials.createdAt} / 1000, 'unixepoch')`.as('day'),
       count: count(testimonials.id),
     })
     .from(testimonials)
     .where(and(
       eq(testimonials.formId, formId),
-      sql`${testimonials.createdAt} >= NOW() - INTERVAL '14 days'`
+      sql`${testimonials.createdAt} >= ${Date.now() - 14 * 86400000}`
     ))
     .groupBy(sql`day`)
     .orderBy(sql`day ASC`);
@@ -391,15 +391,15 @@ export class DrizzleTestimonialRepository implements ITestimonialRepository {
       .from(testimonials)
       .where(and(
         eq(testimonials.formId, formId),
-        sql`${testimonials.createdAt} >= NOW() - INTERVAL '30 days'`
+        sql`${testimonials.createdAt} >= ${Date.now() - 30 * 86400000}`
       ));
     
     const [prev30] = await this.db.select({ count: count(testimonials.id) })
       .from(testimonials)
       .where(and(
         eq(testimonials.formId, formId),
-        sql`${testimonials.createdAt} >= NOW() - INTERVAL '60 days'`,
-        sql`${testimonials.createdAt} < NOW() - INTERVAL '30 days'`
+        sql`${testimonials.createdAt} >= ${Date.now() - 60 * 86400000}`,
+        sql`${testimonials.createdAt} < ${Date.now() - 30 * 86400000}`
       ));
       
     const current30Count = Number(current30?.count || 0);
@@ -427,15 +427,15 @@ export class DrizzleTestimonialRepository implements ITestimonialRepository {
       .from(formVisits)
       .where(and(
         eq(formVisits.formId, formId),
-        sql`${formVisits.date} >= NOW() - INTERVAL '30 days'`
+        sql`${formVisits.date} >= ${new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)}`
       ));
       
     const [prev30VisitsResult] = await this.db.select({ count: sql<number>`sum(${formVisits.visits})` })
       .from(formVisits)
       .where(and(
         eq(formVisits.formId, formId),
-        sql`${formVisits.date} >= NOW() - INTERVAL '60 days'`,
-        sql`${formVisits.date} < NOW() - INTERVAL '30 days'`
+        sql`${formVisits.date} >= ${new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10)}`,
+        sql`${formVisits.date} < ${new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)}`
       ));
       
     const current30Visits = Number(current30VisitsResult?.count || 0);

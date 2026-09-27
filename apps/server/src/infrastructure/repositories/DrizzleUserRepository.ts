@@ -1,12 +1,12 @@
 import { db as globalDb } from '../database/db';
 import * as schema from '../database/schema';
 import { eq } from 'drizzle-orm';
-import type { BunSQLDatabase } from 'drizzle-orm/bun-sql';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import type { IUserRepository } from '../../domain/repositories/IUserRepository';
 import { User } from '../../domain/entities/User';
 
 export class DrizzleUserRepository implements IUserRepository {
-  constructor(private readonly db: BunSQLDatabase<typeof schema> = globalDb) {}
+  constructor(private readonly db: DrizzleD1Database<typeof schema> = globalDb) {}
 
   async findAll(options?: { limit?: number; offset?: number }): Promise<User[]> {
     const query = this.db.select().from(schema.users);

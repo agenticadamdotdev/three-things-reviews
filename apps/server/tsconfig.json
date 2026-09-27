@@ -28,6 +28,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
-  }
+    },
+    "types": ["@cloudflare/workers-types", "bun"]
+  },
+  // The integration tests target the upstream Postgres setup; on Cloudflare, scripts/e2e-cloudflare.sh covers the flow.
+  "exclude": ["tests/integration", "node_modules", ".wrangler"]
 }

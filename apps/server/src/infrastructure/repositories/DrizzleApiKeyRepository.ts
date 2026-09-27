@@ -1,12 +1,12 @@
 import { eq, and } from 'drizzle-orm';
-import type { BunSQLDatabase } from 'drizzle-orm/bun-sql';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import * as schema from '../database/schema';
 import { apiKeys } from '../database/schema';
 import { ApiKey } from '../../domain/entities/ApiKey';
 import type { IApiKeyRepository } from '../../domain/repositories/IApiKeyRepository';
 
 export class DrizzleApiKeyRepository implements IApiKeyRepository {
-  constructor(private readonly db: BunSQLDatabase<typeof schema>) {}
+  constructor(private readonly db: DrizzleD1Database<typeof schema>) {}
 
   async findById(id: string): Promise<ApiKey | null> {
     const [row] = await this.db.select().from(apiKeys).where(eq(apiKeys.id, id));

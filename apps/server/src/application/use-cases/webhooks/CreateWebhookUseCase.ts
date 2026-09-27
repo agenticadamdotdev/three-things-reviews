@@ -1,4 +1,5 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
+import { randomHex } from '../../../shared/utils/randomHex';
 import { Webhook } from '../../../domain/entities/Webhook';
 import type { IWebhookRepository } from '../../../domain/repositories/IWebhookRepository';
 
@@ -19,7 +20,7 @@ export class CreateWebhookUseCase {
       userId,
       url,
       events,
-      secret: randomBytes(24).toString('hex'),
+      secret: randomHex(24),
       isActive: true,
     });
 

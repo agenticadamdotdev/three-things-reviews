@@ -1,6 +1,8 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins";
+import { APIError } from "better-auth/api";
+import { hashPassword, verifyPassword } from "./password";
 import { sql } from "drizzle-orm";
 import { db } from "../database/db";
 import * as schema from "../database/schema";
@@ -12,7 +14,7 @@ if (!secret) {
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: "pg",
+    provider: "sqlite",
     schema: {
       ...schema,
       user: schema.users,
@@ -23,6 +25,8 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    // PBKDF2 through WebCrypto: native on Workers, so sign-in stays well inside CPU limits.
+    password: { hash: hashPassword, verify: verifyPassword },
   },
   plugins: [
     bearer(),
@@ -49,15 +53,12 @@ export const auth = betterAuth({
             }
           }
 
-          await db.transaction(async (tx) => {
-            const [result] = await tx
-              .select({ count: sql<number>`count(*)` })
-              .from(schema.users);
-            
-            if (result && Number(result.count) === 0) {
-              userData.isSystemAdmin = true;
-            }
-          });
+          // Single-owner install: the first account becomes the admin and every later sign-up is refused.
+          const [result] = await db.select({ count: sql<number>`count(*)` }).from(schema.users);
+          if (result && Number(result.count) > 0) {
+            throw new APIError("FORBIDDEN", { message: "Sign-up is closed." });
+          }
+          userData.isSystemAdmin = true;
 
           return { data: userData };
         },

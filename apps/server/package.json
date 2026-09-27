@@ -4,15 +4,17 @@
   "type": "module",
   "private": true,
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260927.1",
     "@types/bun": "latest",
     "@types/nodemailer": "^8.0.0",
     "@types/react": "^19.2.14",
     "drizzle-kit": "^0.31.9",
-    "postgres": "^3.4.8"
+    "postgres": "^3.4.8",
+    "wrangler": "4.141.0"
   },
   "scripts": {
     "dev": "bun --env-file=../../.env run --hot src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "wrangler deploy --dry-run --outdir dist",
     "db:push": "bun --env-file=../../.env drizzle-kit push",
     "db:studio": "bun --env-file=../../.env drizzle-kit studio",
     "db:generate": "bun --env-file=../../.env drizzle-kit generate",
@@ -20,7 +22,7 @@
     "db:seed:admin": "bun --env-file=../../.env scripts/seed-admin.ts",
     "test:e2e:prepare": "bun --env-file=../../.env scripts/prepare-e2e-db.ts",
     "lint": "tsc --noEmit",
-    "test": "bun test --env-file=../../.env --max-concurrency 1"
+    "test": "bun test tests/unit --max-concurrency 1"
   },
   "peerDependencies": {
     "typescript": "^5"

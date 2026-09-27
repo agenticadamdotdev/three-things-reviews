@@ -1,12 +1,12 @@
 import { db as globalDb } from '../database/db';
 import * as schema from '../database/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import type { BunSQLDatabase } from 'drizzle-orm/bun-sql';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import type { INotificationRepository } from '../../domain/repositories/INotificationRepository';
 import { Notification } from '../../domain/entities/Notification';
 
 export class DrizzleNotificationRepository implements INotificationRepository {
-  constructor(private readonly db: BunSQLDatabase<typeof schema> = globalDb) {}
+  constructor(private readonly db: DrizzleD1Database<typeof schema> = globalDb) {}
 
   async save(notification: Notification): Promise<void> {
     const props = notification.getProps();

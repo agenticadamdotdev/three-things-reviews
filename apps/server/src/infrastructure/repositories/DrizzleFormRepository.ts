@@ -1,5 +1,5 @@
 import { and, eq, sql, inArray, sum } from 'drizzle-orm';
-import type { BunSQLDatabase } from 'drizzle-orm/bun-sql';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
 import * as schema from '../database/schema';
 import { forms, formVisits } from '../database/schema';
 import { Form } from '../../domain/entities/Form';
@@ -8,7 +8,7 @@ import { Slug } from '../../domain/value-objects/Slug';
 import { SlugAlreadyInUseError } from '../../domain/errors/SlugAlreadyInUseError';
 
 export class DrizzleFormRepository implements IFormRepository {
-  constructor(private readonly db: BunSQLDatabase<typeof schema>) {}
+  constructor(private readonly db: DrizzleD1Database<typeof schema>) {}
 
   async findById(id: string): Promise<Form | null> {
     const [row] = await this.db.select().from(forms).where(eq(forms.id, id));
