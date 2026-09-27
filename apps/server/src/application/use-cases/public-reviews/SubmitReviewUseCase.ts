@@ -9,6 +9,7 @@ import { Notification } from '../../../domain/entities/Notification';
 import { Rating } from '../../../domain/value-objects/Rating';
 import { Email } from '../../../domain/value-objects/Email';
 import type { WebhookService } from '../../services/WebhookService';
+import { waitUntil } from 'cloudflare:workers';
 
 export interface SubmitReviewRequest {
   formId: string;
@@ -59,7 +60,7 @@ export class SubmitReviewUseCase {
     const tProps = testimonial.getProps();
 
     // Trigger webhook asynchronously
-    this.webhookService.trigger('testimonial.created', form.getUserId(), {
+    waitUntil(this.webhookService.trigger('testimonial.created', form.getUserId(), {
       id: testimonial.getId(),
       formId: form.getId(),
       content: tProps.content,
@@ -67,10 +68,10 @@ export class SubmitReviewUseCase {
       authorEmail: tProps.authorEmail?.getValue(),
       rating: tProps.rating?.getValue(),
       createdAt: tProps.createdAt
-    }).catch(err => { throw new Error(`Webhook trigger failed: ${err.message}`); });
+    }).catch(err => console.error(`Webhook trigger failed: ${err.message}`)));
 
     // Save in-app notification asynchronously
-    this.notificationRepository.save(new Notification({
+    waitUntil(this.notificationRepository.save(new Notification({
       id: randomUUID(),
       userId: form.getUserId(),
       type: 'new_review',
@@ -79,11 +80,11 @@ export class SubmitReviewUseCase {
       formId: form.getId(),
       testimonialId: testimonial.getId(),
       isRead: false,
-    })).catch(err => { throw new Error(`Notification save failed: ${err.message}`); });
+    })).catch(err => console.error(`Notification save failed: ${err.message}`)));
 
     // Send email notification asynchronously
     if (this.emailService) {
-      this.userRepository.findById(form.getUserId()).then(owner => {
+      waitUntil(this.userRepository.findById(form.getUserId()).then(owner => {
         if (!owner) return;
         if (!owner.getNotificationPrefs().newReview) return;
         return this.emailService!.sendNewReviewNotification({
@@ -94,7 +95,7 @@ export class SubmitReviewUseCase {
           rating: tProps.rating?.getValue(),
           content,
         });
-      }).catch(err => { throw new Error(`Email notification failed: ${err.message}`); });
+      }).catch(err => console.error(`Email notification failed: ${err.message}`)));
     }
 
     return testimonial.getId();

@@ -13,7 +13,15 @@
   "d1_databases": [
     { "binding": "DB", "database_name": "three-things-reviews", "database_id": "59cf86e1-bf63-407c-bd6d-621a90b31f47", "migrations_dir": "migrations" }
   ],
+  // Cloudflare Email Sending; the binding may only send as reviews@.
+  "send_email": [
+    { "name": "EMAIL", "allowed_sender_addresses": ["reviews@threethingsplanner.com"] }
+  ],
+  // Weekly reviews summary: Mondays 13:00 UTC (9am Eastern).
+  "triggers": { "crons": ["0 13 * * 1"] },
   "vars": {
+    "EMAIL_FROM": "reviews@threethingsplanner.com",
+    "ADMIN_URL": "https://reviews.threethingsplanner.com",
     "NODE_ENV": "production",
     "BETTER_AUTH_URL": "https://reviews.threethingsplanner.com/api/auth",
     "AUTH_TRUSTED_ORIGINS": "https://reviews.threethingsplanner.com",

@@ -6,6 +6,8 @@ import { DrizzleUserRepository } from './repositories/DrizzleUserRepository';
 import { DrizzleWebhookRepository } from './repositories/DrizzleWebhookRepository';
 import { DrizzleNotificationRepository } from './repositories/DrizzleNotificationRepository';
 import type { IEmailService } from '../domain/services/IEmailService';
+import { CloudflareEmailService } from './email/CloudflareEmailService';
+import { env } from 'cloudflare:workers';
 
 import { WebhookService } from '../application/services/WebhookService';
 
@@ -60,8 +62,12 @@ const notificationRepository = new DrizzleNotificationRepository(db as any);
 // Services
 const webhookService = new WebhookService(webhookRepository);
 
-// Email notifications are off on Cloudflare (nodemailer needs raw sockets); new reviews show in the dashboard.
-const emailService: IEmailService | null = null;
+// Cloudflare Email Sending (send_email binding EMAIL). Without the binding (tests), email is simply off.
+const cfEnv = env as unknown as { EMAIL?: ConstructorParameters<typeof CloudflareEmailService>[0]; EMAIL_FROM?: string; ADMIN_URL?: string };
+export const cloudflareEmail = cfEnv.EMAIL && cfEnv.EMAIL_FROM
+  ? new CloudflareEmailService(cfEnv.EMAIL, cfEnv.EMAIL_FROM, cfEnv.ADMIN_URL ?? '')
+  : null;
+const emailService: IEmailService | null = cloudflareEmail;
 
 // Use Case Instances
 const generateUserApiKeys = new GenerateUserApiKeys(apiKeyRepository);

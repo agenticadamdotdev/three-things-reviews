@@ -4,7 +4,7 @@ set -u
 cd "$(dirname "$0")/.."
 B=http://localhost:8788; O="Origin: $B"; J="Content-Type: application/json"
 rm -rf .wrangler/state && bunx wrangler d1 migrations apply three-things-reviews --local >/dev/null 2>&1
-bunx wrangler dev --port 8788 --local >/tmp/rk-dev.log 2>&1 & DEV=$!
+bunx wrangler dev --port 8788 --local --test-scheduled >/tmp/rk-dev.log 2>&1 & DEV=$!
 trap 'kill $DEV 2>/dev/null; pkill -f "wrangler dev --port 8788" 2>/dev/null' EXIT
 for i in $(seq 60); do curl -s $B/api/v1/public/forms/x >/dev/null 2>&1 && break; sleep 1; done
 pass=0; fail=0; check(){ if [ "$2" = "$3" ]; then echo "PASS $1"; pass=$((pass+1)); else echo "FAIL $1 (got $2, want $3)"; fail=$((fail+1)); fi; }
@@ -38,5 +38,10 @@ FID=$(curl -s $B/api/v1/forms -H "$A" | py "(d if isinstance(d, list) else d.get
 check "form stats (14-day chart)" "$(st $B/api/v1/forms/$FID/stats -H "$A")" 200
 REORDER='{"positions":[{"id":"'$RID'","position":1}]}'
 check "reorder (case update)" "$(st -X POST $B/api/v1/testimonials/reorder -H "$A" -H "$J" -d "$REORDER")" 200
+sleep 2
+check "new-review email handed to Email Sending" "$(grep -c 'New 5★ review from Sam' /tmp/rk-dev.log | tr -d ' ' | awk '{print ($1>0)?"yes":"no"}')" yes
+check "weekly report cron runs" "$(st "$B/cdn-cgi/handler/scheduled?cron=0+13+*+*+1")" 200
+sleep 2
+check "weekly report email handed to Email Sending" "$(grep -c 'Weekly reviews:' /tmp/rk-dev.log | tr -d ' ' | awk '{print ($1>0)?"yes":"no"}')" yes
 echo "passed $pass, failed $fail"
 [ $fail -eq 0 ] || { echo '--- dev log tail'; tail -30 /tmp/rk-dev.log; }

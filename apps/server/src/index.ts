@@ -12,6 +12,8 @@ import { dashboardRouter } from './interface/routes/dashboard';
 import { testimonialsRouter } from './interface/routes/testimonials';
 import webhooksRouter from './interface/routes/webhooks';
 import { notificationsRouter } from './interface/routes/notifications';
+import { cloudflareEmail } from './infrastructure/container';
+import { sendWeeklyReports } from './application/services/WeeklyReport';
 
 
 const app = new OpenAPIHono();
@@ -97,4 +99,8 @@ app.get('/', (c) => {
 // reach this Worker.
 export default {
   fetch: app.fetch,
+  // Weekly reviews summary (cron in wrangler.jsonc).
+  async scheduled(_event: ScheduledController, _env: unknown, ctx: ExecutionContext) {
+    if (cloudflareEmail) ctx.waitUntil(sendWeeklyReports(cloudflareEmail));
+  },
 };
