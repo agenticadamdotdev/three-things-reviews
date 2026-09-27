@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { SettingsLayout } from '../components/dashboard/settings-layout'
-import { Globe, Bell, Moon, Sun } from 'lucide-react'
+import { Bell, Moon, Sun } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 import { meService, type NotificationPrefs } from '../services/me.service'
 
@@ -49,24 +49,6 @@ export default function SettingsPage() {
                <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all duration-300 ${isDark ? 'right-1' : 'left-1'}`} />
             </button>
           </div>
-        </div>
-
-        {/* Language */}
-        <div className="bg-(--v3-bg2) border border-(--v3-border) rounded-2xl p-6">
-           <div className="flex items-center gap-4 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-(--v3-bg3) border border-(--v3-border) flex items-center justify-center text-(--v3-muted2)">
-                <Globe size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-(--v3-text)">Language & Region</h3>
-                <p className="text-xs text-(--v3-muted2)">Default interface language.</p>
-              </div>
-           </div>
-
-           <select className="w-full bg-(--v3-bg) border border-(--v3-border) rounded-xl py-3 px-4 text-sm text-(--v3-text) outline-none appearance-none">
-              <option value="fr">Français (France)</option>
-              <option value="en">English (US)</option>
-           </select>
         </div>
 
         {/* Notifications */}
